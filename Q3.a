@@ -1,0 +1,34 @@
+CREATE TABLE TFriends (person1 INT, person2 INT)
+CREATE TABLE TLike (person INT, artist INT)
+
+LOAD DATA INFILE "friends.txt"
+  INTO TABLE TFriends FIELDS TERMINATED BY ","
+
+LOAD DATA INFILE "like.txt"
+  INTO TABLE TLike FIELDS TERMINATED BY ","
+
+// This is just reinserting everything...
+INSERT INTO TFriends SELECT person2, person1 FROM TFriends
+
+CREATE TABLE UFriends AS
+  SELECT person1, person2 FROM DISTINCT(TFriends)
+  
+CREATE TABLE ULike AS SELECT person,artist,1 as dummy FROM DISTINCT(TLike)
+
+CREATE TABLE t1 AS SELECT person1 as person, person2 FROM UFriends
+CREATE TABLE t2 AS SELECT person1, person2 as person FROM UFriends
+
+CREATE TABLE friend1 AS
+	SELECT person1, person as person2, artist FROM t2 INNER JOIN ULike USING person
+
+CREATE TABLE friend1T AS
+	SELECT person1 as person, person2, artist FROM friend1
+
+SELECT person AS person1, person2, artist FROM friend1T FULL OUTER JOIN ULike
+USING (person,artist) 
+WHERE dummy IS NULL
+INTO OUTFILE "X.csv"
+FIELDS TERMINATED BY ","
+
+
+

@@ -1,0 +1,42 @@
+CREATE TABLE TRADE (Time INT, Symbol INT, Quantity INT, Price INT)
+
+LOAD DATA INFILE "trade.txt"
+INTO TABLE TRADE 
+FIELDS TERMINATED BY ","
+
+
+
+SELECT SUM(Price * Quantity) / SUM(Quantity) from TRADE
+GROUP BY Symbol
+INTO OUTFILE "1.WeightedAverage.csv" 
+FIELDS TERMINATED BY ","
+
+
+CREATE TABLE T2	AS
+	SELECT Time,Symbol,Price, avgs(10,Price) 
+	FROM TRADE 
+	ASSUMING ASC Time
+	GROUP BY Symbol
+SELECT * FROM FLATTEN(T2)
+INTO OUTFILE "2.MovAvg.csv"
+FIELDS TERMINATED BY ","
+
+
+CREATE TABLE T3	AS
+	SELECT Time,Symbol,Price, sums(10,Price*Quantity) / sums(10,Quantity) 
+	FROM TRADE 
+	ASSUMING ASC Time
+	GROUP BY Symbol
+SELECT * FROM FLATTEN(T3)
+INTO OUTFILE "3.MovAvgWeighted.csv"
+FIELDS TERMINATED BY ","
+
+
+CREATE TABLE T4	AS
+	SELECT Symbol, max(Price - mins(Price))  
+	FROM TRADE 
+	ASSUMING ASC Time
+	GROUP BY Symbol
+SELECT * FROM T4
+INTO OUTFILE "4.MaxProfit.csv"
+FIELDS TERMINATED BY ","
